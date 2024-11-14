@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        ".gitignore": "cpp",
+        "user.h": "c",
+        "types.h": "c"
+    }
+}

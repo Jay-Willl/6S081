@@ -23,9 +23,12 @@ struct {
   struct run *freelist;
 } kmem;
 
+static uint64 free_mem_size = 0;
+
 void
 kinit()
 {
+  free_mem_size = 0;
   initlock(&kmem.lock, "kmem");
   freerange(end, (void*)PHYSTOP);
 }
@@ -35,8 +38,11 @@ freerange(void *pa_start, void *pa_end)
 {
   char *p;
   p = (char*)PGROUNDUP((uint64)pa_start);
-  for(; p + PGSIZE <= (char*)pa_end; p += PGSIZE)
+  for(; p + PGSIZE <= (char*)pa_end; p += PGSIZE) {
     kfree(p);
+    free_mem_size += PGSIZE;
+  }
+
 }
 
 // Free the page of physical memory pointed at by v,
@@ -59,6 +65,7 @@ kfree(void *pa)
   acquire(&kmem.lock);
   r->next = kmem.freelist;
   kmem.freelist = r;
+  free_mem_size += PGSIZE;
   release(&kmem.lock);
 }
 
@@ -76,7 +83,32 @@ kalloc(void)
     kmem.freelist = r->next;
   release(&kmem.lock);
 
-  if(r)
+  if(r) {
+    free_mem_size -= PGSIZE;
     memset((char*)r, 5, PGSIZE); // fill with junk
+  }
   return (void*)r;
+}
+
+
+
+uint64
+getfree(void)
+{
+  return free_mem_size;
+}
+
+uint64
+cntfree(void)
+{
+  uint64 bytes = 0;
+  struct run *temp = kmem.freelist;
+
+  acquire(&kmem.lock);
+  while (temp) {
+    bytes += PGSIZE;
+    temp = temp->next;
+  }
+  release(&kmem.lock);
+  return bytes;
 }

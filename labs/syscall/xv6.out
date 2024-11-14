@@ -1,0 +1,11 @@
+
+xv6 kernel is booting
+
+hart 2 starting
+hart 1 starting
+init: starting sh
+$ sysinfotest
+sysinfotest: start
+0x0000003fffff9f78, 16
+sysinfotest: OK
+$ qemu-system-riscv64: terminating on signal 15 from pid 1470248 (make)
